@@ -1,0 +1,11 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="True">
+    <ui:Button parse-escape-sequences="true" display-tooltip-when-elided="true" name="button" style="flex-shrink: 1; flex-grow: 1; -unity-text-align: middle-left; white-space: nowrap; margin-right: 2px; margin-left: 2px; padding-top: 4px; padding-right: 8px; padding-bottom: 4px; padding-left: 8px;">
+        <ui:VisualElement style="flex-grow: 1; flex-direction: row;">
+            <ui:Label tabindex="-1" text="Label" parse-escape-sequences="true" display-tooltip-when-elided="true" name="text" style="flex-grow: 1; flex-shrink: 1;" />
+            <ui:VisualElement style="flex-grow: 0; flex-direction: row; align-self: center;">
+                <ui:VisualElement name="warning" style="flex-grow: 1; width: 12px; height: 12px; flex-shrink: 0; margin-right: 2px; margin-left: 1px; background-color: rgb(255, 193, 7); border-top-left-radius: 50%; border-top-right-radius: 50%; border-bottom-right-radius: 50%; border-bottom-left-radius: 50%; border-left-color: rgb(35, 35, 35); border-right-color: rgb(35, 35, 35); border-top-color: rgb(35, 35, 35); border-bottom-color: rgb(35, 35, 35); border-top-width: 1px; border-right-width: 1px; border-bottom-width: 1px; border-left-width: 1px;" />
+                <ui:VisualElement name="error" style="flex-grow: 1; width: 12px; height: 12px; flex-shrink: 0; margin-right: 2px; margin-left: 1px; background-color: rgb(255, 83, 74); border-top-left-radius: 50%; border-top-right-radius: 50%; border-bottom-right-radius: 50%; border-bottom-left-radius: 50%; border-left-color: rgb(35, 35, 35); border-right-color: rgb(35, 35, 35); border-top-color: rgb(35, 35, 35); border-bottom-color: rgb(35, 35, 35); border-top-width: 1px; border-right-width: 1px; border-bottom-width: 1px; border-left-width: 1px;" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:Button>
+</ui:UXML>

@@ -1,0 +1,55 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="True">
+    <ui:VisualElement style="flex-grow: 1; flex-direction: row;">
+        <ui:ScrollView scroll-deceleration-rate="0,135" elasticity="0,1" style="background-color: rgb(40, 40, 40);">
+            <ui:VisualElement name="list" style="flex-grow: 1; width: 175px; max-width: 100%; padding-top: 4px; padding-right: 4px; padding-bottom: 4px; padding-left: 4px;" />
+        </ui:ScrollView>
+        <ui:VisualElement style="flex-grow: 1;">
+            <ui:ScrollView scroll-deceleration-rate="0,135" elasticity="0,1" name="infos" style="flex-grow: 1; display: flex; overflow: hidden;">
+                <ui:VisualElement style="flex-grow: 1;">
+                    <ui:VisualElement style="flex-grow: 1; display: flex;">
+                        <ui:VisualElement style="flex-grow: 1; flex-direction: column; padding-top: 4px; padding-right: 4px; padding-bottom: 4px; padding-left: 4px; border-bottom-width: 1px; border-left-color: rgb(35, 35, 35); border-right-color: rgb(35, 35, 35); border-top-color: rgb(35, 35, 35); border-bottom-color: rgb(35, 35, 35);">
+                            <ui:VisualElement style="flex-grow: 1; flex-direction: row; overflow: hidden;">
+                                <uie:ObjectField label="Behaviour" type="VRC.Udon.UdonBehaviour, VRC.Udon" name="behaviour" style="flex-grow: 1;" />
+                                <ui:Button text="Inspect" parse-escape-sequences="true" display-tooltip-when-elided="true" name="ping" tooltip="Inspect the UdonBehaviour" />
+                            </ui:VisualElement>
+                            <ui:VisualElement style="flex-grow: 1; margin-top: 4px;">
+                                <ui:VisualElement name="to_desync" style="flex-grow: 1; margin-top: 1px; margin-right: 3px; margin-bottom: 1px; margin-left: 3px; padding-top: 4px; padding-right: 4px; padding-bottom: 4px; padding-left: 4px; background-color: rgb(35, 35, 35); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; flex-direction: row; border-left-color: rgb(255, 193, 7); border-right-color: rgb(255, 193, 7); border-top-color: rgb(255, 193, 7); border-bottom-color: rgb(255, 193, 7); border-top-width: 1px; border-right-width: 1px; border-bottom-width: 1px; border-left-width: 1px;">
+                                    <ui:Label tabindex="-1" text="Your component is synconised, but you have no synconised variables." parse-escape-sequences="true" display-tooltip-when-elided="true" style="margin-top: 1px; margin-right: 3px; margin-bottom: 1px; margin-left: 3px; -unity-text-align: middle-left; flex-grow: 1; flex-shrink: 1; flex-wrap: nowrap; white-space: normal;" />
+                                    <ui:VisualElement style="flex-grow: 0; justify-content: center;">
+                                        <ui:Button text="Fix" parse-escape-sequences="true" display-tooltip-when-elided="true" name="fix" />
+                                    </ui:VisualElement>
+                                </ui:VisualElement>
+                                <ui:VisualElement name="to_sync" style="flex-grow: 1; margin-top: 1px; margin-right: 3px; margin-bottom: 1px; margin-left: 3px; padding-top: 4px; padding-right: 4px; padding-bottom: 4px; padding-left: 4px; background-color: rgb(35, 35, 35); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; flex-direction: row; border-left-color: rgb(255, 193, 7); border-right-color: rgb(255, 193, 7); border-top-color: rgb(255, 193, 7); border-bottom-color: rgb(255, 193, 7); border-top-width: 1px; border-right-width: 1px; border-bottom-width: 1px; border-left-width: 1px;">
+                                    <ui:Label tabindex="-1" text="Your component is not synconised, whereas you have a synconised variable." parse-escape-sequences="true" display-tooltip-when-elided="true" style="margin-top: 1px; margin-right: 3px; margin-bottom: 1px; margin-left: 3px; -unity-text-align: middle-left; flex-grow: 1; flex-shrink: 1; flex-wrap: nowrap; white-space: normal;" />
+                                    <ui:VisualElement style="flex-grow: 0; justify-content: center;">
+                                        <ui:Button text="Manual" parse-escape-sequences="true" display-tooltip-when-elided="true" name="manual" />
+                                        <ui:Button text="Continuous" parse-escape-sequences="true" display-tooltip-when-elided="true" name="continuous" />
+                                    </ui:VisualElement>
+                                </ui:VisualElement>
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                    <ui:VisualElement style="flex-grow: 1; border-left-color: rgb(35, 35, 35); border-right-color: rgb(35, 35, 35); border-top-color: rgb(35, 35, 35); border-bottom-color: rgb(35, 35, 35); border-bottom-width: 1px;">
+                        <ui:Foldout text="Details" style="margin-top: 4px; margin-right: 4px; margin-bottom: 4px; margin-left: 4px;">
+                            <uie:ObjectField label="Component" name="component" type="UnityEngine.MonoBehaviour, UnityEngine.CoreModule" />
+                            <uie:ObjectField label="Source Program" name="source" type="UdonSharp.UdonSharpProgramAsset, UdonSharp.Editor" />
+                            <ui:EnumField label="Sync Method" type="VRC.SDKBase.Networking+SyncType, VRCSDKBase" name="sync" />
+                        </ui:Foldout>
+                    </ui:VisualElement>
+                    <ui:VisualElement style="flex-grow: 1; border-left-color: rgb(35, 35, 35); border-right-color: rgb(35, 35, 35); border-top-color: rgb(35, 35, 35); border-bottom-color: rgb(35, 35, 35); border-bottom-width: 1px;">
+                        <ui:Foldout text="Variables" style="margin-top: 4px; margin-right: 4px; margin-bottom: 4px; margin-left: 4px;">
+                            <ui:VisualElement style="flex-grow: 1;">
+                                <ui:Label tabindex="-1" text="This UdonBehaviour has no exposed variables." parse-escape-sequences="true" display-tooltip-when-elided="true" name="no_variable" style="margin-top: 1px; margin-right: 3px; margin-bottom: 1px; margin-left: 3px; white-space: nowrap; overflow: hidden;" />
+                                <ui:VisualElement name="variables" style="flex-grow: 1;" />
+                            </ui:VisualElement>
+                        </ui:Foldout>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+            </ui:ScrollView>
+            <ui:VisualElement name="no_behaviour" style="flex-grow: 1; justify-content: center; align-self: center; overflow: hidden; display: none;">
+                <ui:Label tabindex="-1" text="No UdonBehaviour found" parse-escape-sequences="true" display-tooltip-when-elided="true" style="-unity-text-align: upper-center; font-size: 24px; white-space: nowrap; text-overflow: clip; overflow: visible;" />
+                <ui:Label tabindex="-1" text="Please select an udonbehaviour to see its details." parse-escape-sequences="true" display-tooltip-when-elided="true" style="-unity-text-align: upper-center;" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

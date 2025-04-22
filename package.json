@@ -1,0 +1,24 @@
+{
+  "name": "fr.hactazia.udon-tools",
+  "displayName": "Hactazia - UdonTools",
+  "version": "0.0.1",
+  "description": "Tools for UdonSharp and Udon",
+  "url": "https://github.com/hactazia/udon-tools",
+  "bugs": {
+    "url": "https://github.com/hactazia/udon-tools/issues"
+  },
+  "license": "MIT",
+  "author": {
+    "name": "hactazia",
+    "discord": "hactazia",
+    "url": "https://github.com/hactazia"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/hactazia/udon-tools"
+  },
+  "vpmDependencies": {
+    "com.vrchat.worlds": "^3.8.x"
+  },
+  "unity": "2022.3"
+}
