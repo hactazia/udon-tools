@@ -1,3 +1,4 @@
+#if UNITY_EDITOR
 using System;
 using System.Collections;
 using UnityEditor;
@@ -9,7 +10,11 @@ using System.Linq;
 using UnityEditor.UIElements;
 using UnityEngine.UIElements;
 using VRC.SDKBase;
-using VRC.Udon.Common.Interfaces;
+using VRC.Udon.Editor.ProgramSources.UdonGraphProgram.UI;
+using LayerMaskField = UnityEditor.UIElements.LayerMaskField;
+using Object = UnityEngine.Object;
+using UnsignedIntegerField = UnityEngine.UIElements.UnsignedIntegerField;
+using UnsignedLongField = UnityEngine.UIElements.UnsignedLongField;
 
 namespace Hactazia.UdonTools
 {
@@ -197,14 +202,13 @@ namespace Hactazia.UdonTools
             var noBehaviour = _root?.Q("no_behaviour");
             if (infos == null || noBehaviour == null) return;
 
-            var component = behaviour?.GetComponent<VRC.Udon.UdonBehaviour>();
-            if (!behaviour || !component)
+            var component = behaviour?.GetUdonBehaviour();
+            if (!component)
             {
                 infos.style.display = DisplayStyle.None;
                 noBehaviour.style.display = DisplayStyle.Flex;
                 return;
             }
-
 
             infos.style.display = DisplayStyle.Flex;
             noBehaviour.style.display = DisplayStyle.None;
@@ -222,103 +226,331 @@ namespace Hactazia.UdonTools
             syncField.value = component.SyncMethod;
         }
 
-        private FieldInfo[] GetFieldInfos(UdonSharpBehaviour behaviour)
-        {
-            if (!behaviour) return Array.Empty<FieldInfo>();
-            var serializedObject = new SerializedObject(behaviour);
-            var fieldProp = serializedObject.GetIterator();
-
-            var fieldNames = new List<string>();
-            while (fieldProp.NextVisible(true))
-                fieldNames.Add(fieldProp.name);
-
-            return behaviour.GetType()
-                .GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
-                .Where(field => fieldNames.Contains(field.Name))
-                .ToArray();
-        }
-
         private void UpdateVariables()
         {
             var variables = _root?.Q("variables");
             var noVariables = _root?.Q("no_variable");
-            var type = _selectedBehaviour?.GetType();
-            if (variables == null || noVariables == null || type == null) return;
+            if (variables == null || noVariables == null) return;
 
-            var fields = GetFieldInfos(_selectedBehaviour);
-            if (fields.Length == 0)
+            var dump = _selectedBehaviour.GetUdonSharpBackingUdonBehaviour();
+            var program = dump?.GetProgram();
+            if (program == null)
             {
                 variables.style.display = DisplayStyle.None;
                 noVariables.style.display = DisplayStyle.Flex;
                 return;
             }
 
-            var fieldNames = new HashSet<string>();
-            foreach (var field in fields)
-                fieldNames.Add(field.Name);
+            var symbols = program.SymbolTable.GetSymbols();
+            if (symbols.Length == 0)
+            {
+                variables.style.display = DisplayStyle.None;
+                noVariables.style.display = DisplayStyle.Flex;
+                return;
+            }
+
+            var symbolNames = new HashSet<string>();
+            foreach (var symbol in symbols)
+                symbolNames.Add(symbol);
 
             variables.style.display = DisplayStyle.Flex;
             noVariables.style.display = DisplayStyle.None;
 
             foreach (var child in variables.Children().ToArray())
-                if (child.userData is not string fieldName || !fieldNames.Contains(fieldName))
+                if (child.userData is not string fieldName || !symbolNames.Contains(fieldName))
                     variables.Remove(child);
-                else fieldNames.Remove(fieldName);
+                else symbolNames.Remove(fieldName);
 
-
-            // var element = Resources.Load<VisualTreeAsset>("UdonSharpInspectorEditorVariable");
-            foreach (var field in fields)
+            foreach (var symbol in symbols)
             {
-                if (!fieldNames.Contains(field.Name)) continue;
-                var elementInstance = new PropertyField();
-                elementInstance.userData = field.Name;
+                if (!symbolNames.Contains(symbol)) continue;
+                var address = program.SymbolTable.GetAddressFromSymbol(symbol);
+                var type = program.Heap.GetHeapVariableType(address);
+                var elementInstance = CreateField(type);
+                elementInstance.userData = symbol;
                 variables.Add(elementInstance);
             }
 
             foreach (var child in variables.Children().ToArray())
             {
-                if (child.userData is not string fieldName) continue;
-                var field = fields.FirstOrDefault(f => f.Name == fieldName);
-                if (field == null || child is not PropertyField elementInstance) continue;
-                var fp = _selectedBehaviour.GetType().GetField(field.Name);
-                if (fp != null)
-                {
-                    // get if have [UdonSynced] attribute
-                    elementInstance.BindProperty(new SerializedObject(_selectedBehaviour).FindProperty(field.Name));
-                    elementInstance.label = ObjectNames.NicifyVariableName(field.Name);
+                if (child.userData is not string symbol || !symbolNames.Contains(symbol)) continue;
 
-                    var infos = new List<string>
-                    {
-                        $"Name: {type.FullName}.{field.Name}",
-                        $"Type: {field.FieldType.FullName}",
-                        "Attributes: "
-                    };
+                var address = program.SymbolTable.GetAddressFromSymbol(symbol);
+                var value = program.Heap.GetHeapVariable(address);
+                var type = program.Heap.GetHeapVariableType(address);
 
-                    var attrs = field.GetCustomAttributes(true)
-                        .Select(a => a)
-                        .Select(a => $" - {ParseAttribute(a)}")
-                        .ToArray();
-                    infos.Add(attrs.Length > 0
-                        ? string.Join(", ", attrs)
-                        : " - No attributes");
-                    infos.Add("Flags: " + field.Attributes);
-
-                    elementInstance.tooltip = string.Join("\n", infos);
-                    elementInstance.SetEnabled(true);
-                }
-                else
-                {
-                    elementInstance.label = field.Name;
-                    elementInstance.tooltip = "Field not found";
-                    elementInstance.SetEnabled(false);
-                }
+                UpdateField(child, symbol, value);
+                var infos = new List<string> { $"Type: {type.FullName}" };
+                child.tooltip = string.Join("\n", infos);
+                child.SetEnabled(true);
             }
         }
+
+        private void UpdateField(VisualElement field, string name, object value)
+        {
+            if (field is Label label)
+            {
+                label.text = $"{name}: {value}";
+                return;
+            }
+
+            if (field is TextField textField)
+            {
+                textField.value = value?.ToString() ?? "";
+                textField.label = name;
+                textField.SetEnabled(true);
+                return;
+            }
+
+            if (field is IntegerField intField)
+            {
+                intField.value = Convert.ToInt32(value);
+                intField.label = name;
+                intField.SetEnabled(true);
+                return;
+            }
+
+            if (field is UnsignedIntegerField uintField)
+            {
+                uintField.value = Convert.ToUInt32(value);
+                uintField.label = name;
+                uintField.SetEnabled(true);
+                return;
+            }
+
+            if (field is LongField longField)
+            {
+                longField.value = Convert.ToInt64(value);
+                longField.label = name;
+                longField.SetEnabled(true);
+                return;
+            }
+
+            if (field is UnsignedLongField ulongField)
+            {
+                ulongField.value = Convert.ToUInt64(value);
+                ulongField.label = name;
+                ulongField.SetEnabled(true);
+                return;
+            }
+
+            if (field is FloatField floatField)
+            {
+                floatField.value = Convert.ToSingle(value);
+                floatField.label = name;
+                floatField.SetEnabled(true);
+                return;
+            }
+
+            if (field is DoubleField doubleField)
+            {
+                doubleField.value = Convert.ToDouble(value);
+                doubleField.label = name;
+                doubleField.SetEnabled(true);
+                return;
+            }
+
+            if (field is Toggle toggle)
+            {
+                toggle.value = Convert.ToBoolean(value);
+                toggle.label = name;
+                toggle.SetEnabled(true);
+                return;
+            }
+
+            if (field is ObjectField objectField)
+            {
+                objectField.value = (Object)value;
+                objectField.label = name;
+                objectField.SetEnabled(true);
+                return;
+            }
+
+            if (field is EnumField enumField)
+            {
+                enumField.value = (Enum)value;
+                enumField.label = name;
+                enumField.SetEnabled(true);
+                return;
+            }
+
+            if (field is Vector2Field vector2Field)
+            {
+                vector2Field.value = (Vector2)value;
+                vector2Field.label = name;
+                vector2Field.SetEnabled(true);
+                return;
+            }
+
+            if (field is Vector3Field vector3Field)
+            {
+                vector3Field.value = (Vector3)value;
+                vector3Field.label = name;
+                vector3Field.SetEnabled(true);
+                return;
+            }
+
+            if (field is Vector4Field vector4Field)
+            {
+                vector4Field.value = (Vector4)value;
+                vector4Field.label = name;
+                vector4Field.SetEnabled(true);
+                return;
+            }
+
+            if (field is QuaternionField quaternionField)
+            {
+                quaternionField.value = (Quaternion)value;
+                quaternionField.label = name;
+                quaternionField.SetEnabled(true);
+                return;
+            }
+
+            if (field is ColorField colorField)
+            {
+                colorField.value = (Color)value;
+                colorField.label = name;
+                colorField.SetEnabled(true);
+                return;
+            }
+
+            if (field is BoundsField boundsField)
+            {
+                boundsField.value = (Bounds)value;
+                boundsField.label = name;
+                boundsField.SetEnabled(true);
+                return;
+            }
+
+            if (field is RectField rectField)
+            {
+                rectField.value = (Rect)value;
+                rectField.label = name;
+                rectField.SetEnabled(true);
+                return;
+            }
+
+            if (field is LayerMaskField layerMaskField)
+            {
+                layerMaskField.value = (LayerMask)value;
+                layerMaskField.label = name;
+                layerMaskField.SetEnabled(true);
+                return;
+            }
+
+            if (field is ListView listView)
+            {
+                var l = (IList)value;
+                listView.itemsSource = l;
+                listView.headerTitle = $"{name}";
+                listView.makeItem = () => CreateField(l.GetType().GetElementType());
+                listView.bindItem = (e, i) =>
+                {
+                    var item = l[i];
+                    UpdateField(e, $"{name}[{i}]", item);
+                };
+                listView.unbindItem = (e, i) =>
+                {
+                    var item = l[i];
+                    UpdateField(e, $"{name}[{i}]", item);
+                };
+                listView.Rebuild();
+                return;
+            }
+
+            field.SetEnabled(false);
+        }
+
+        private VisualElement CreateField(Type type)
+        {
+            if (type == typeof(string))
+                return new TextField();
+            if (type == typeof(int))
+                return new IntegerField();
+            if (type == typeof(uint))
+                return new UnsignedIntegerField();
+            if (type == typeof(long))
+                return new LongField();
+            if (type == typeof(ulong))
+                return new UnsignedLongField();
+            if (type == typeof(float))
+                return new FloatField();
+            if (type == typeof(double))
+                return new DoubleField();
+            if (type == typeof(bool))
+                return new Toggle();
+            if (type == typeof(byte))
+                return new IntegerField();
+            if (type == typeof(sbyte))
+                return new IntegerField();
+            if (type == typeof(short))
+                return new IntegerField();
+            if (type == typeof(ushort))
+                return new UnsignedIntegerField();
+            if (type == typeof(char))
+                return new IntegerField();
+            if (type == typeof(decimal))
+                return new FloatField();
+
+            if (type == typeof(Vector2))
+                return new Vector2Field();
+            if (type == typeof(Vector3))
+                return new Vector3Field();
+            if (type == typeof(Vector4))
+                return new Vector4Field();
+            if (type == typeof(Quaternion))
+                return new QuaternionField();
+            if (type == typeof(Color))
+                return new ColorField();
+            if (type == typeof(Bounds))
+                return new BoundsField();
+            if (type == typeof(Rect))
+                return new RectField();
+            if (type == typeof(LayerMask))
+                return new LayerMaskField();
+
+            if (type.IsEnum)
+                return new EnumField();
+
+            if (type.IsArray)
+                return new ListView
+                {
+                    style =
+                    {
+                        flexGrow = 1,
+                        flexShrink = 1
+                    },
+                    headerTitle = "<array>",
+                    showAddRemoveFooter = true,
+                    showFoldoutHeader = true,
+                    showBorder = true,
+                    fixedItemHeight = 20,
+                };
+
+            if (type.IsSubclassOf(typeof(Object)))
+                return new ObjectField();
+
+            return new Label($"<text>: <text>")
+            {
+                // margin: 1px 3px 1px 3px
+                style =
+                {
+                    marginLeft = 3,
+                    marginRight = 3,
+                    marginTop = 3,
+                    marginBottom = 3
+                }
+            };
+        }
+
+        private FieldInfo[] GetFieldInfos(UdonSharpBehaviour behaviour)
+            => behaviour.GetType()
+                .GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
 
         private CheckFags Check(UdonSharpBehaviour behaviour)
         {
             var result = CheckFags.None;
-            var component = behaviour?.GetComponent<VRC.Udon.UdonBehaviour>();
+            var component = behaviour?.GetUdonBehaviour();
             if (!component) return result;
 
             var isSynced = component.SyncMethod is not Networking.SyncType.None
@@ -372,3 +604,4 @@ namespace Hactazia.UdonTools
         Error = 2,
     }
 }
+#endif

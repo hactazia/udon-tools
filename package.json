@@ -1,7 +1,7 @@
 {
   "name": "fr.hactazia.udon-tools",
   "displayName": "Hactazia - UdonTools",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Tools for UdonSharp and Udon",
   "url": "https://github.com/hactazia/udon-tools",
   "bugs": {
